@@ -49,6 +49,8 @@ class WhoosheeQuery(BaseQuery):
         """Do a fulltext search on the query.
         Returns a query filtered with results of the fulltext search.
 
+        对一次查询做全文搜索，返回一个全文搜索结果已经过滤的query
+
         :param search_string: The string to search for.
         :param group: The whoosh group to use for searching.
                       Defaults to :class:`whoosh.qparser.OrGroup` which
@@ -157,6 +159,8 @@ class AbstractWhoosheer(object):
         """
         index = Whooshee.get_or_create_index(_get_app(cls), cls)
         prepped_string = cls.prep_search_string(search_string, match_substrings)
+
+        # 创建一个Whoosh的Searcher object
         with index.searcher() as searcher:
             parser = whoosh.qparser.MultifieldParser(cls.schema.names(), index.schema, group=group)
             query = parser.parse(prepped_string)
@@ -324,11 +328,14 @@ class Whooshee(object):
         mwh = ModelWhoosheer
 
         def inner(model):
+            '''装饰器的处理上下文'''
             mwh.index_subdir = model.__tablename__
             mwh.models = [model]
 
+            # 获取需要建立索引的model的字段
             schema_attrs = {}
-            for field in model.__table__.columns:
+            for field in model.__table__.columns:   # 遍历model的所有字段
+                # 主键
                 if field.primary_key:
                     primary = field.name
                     primary_is_numeric = True
@@ -337,8 +344,10 @@ class Whooshee(object):
                     else:
                         primary_is_numeric = False
                         schema_attrs[field.name] = whoosh.fields.ID(stored=True, unique=True)
-                elif field.name in index_fields:
+                elif field.name in index_fields:    # 获取其他非主键字段
                     schema_attrs[field.name] = whoosh.fields.TEXT(**kw)
+            # 创建whoosh Schema
+            # https://whoosh.readthedocs.io/en/latest/quickstart.html#the-index-and-schema-objects
             mwh.schema = whoosh.fields.Schema(**schema_attrs)
             # we can't check with isinstance, because ModelWhoosheer is private
             # so use this attribute to find out

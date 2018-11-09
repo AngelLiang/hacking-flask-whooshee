@@ -7,6 +7,7 @@ from inspect import isclass
 
 import sqlalchemy
 
+# 引入 whoosh
 import whoosh
 import whoosh.fields
 import whoosh.index
@@ -14,6 +15,8 @@ import whoosh.qparser
 from whoosh.filedb.filestore import RamStorage
 
 from flask import current_app
+
+# 依赖 flask_sqlalchemy
 from flask_sqlalchemy import BaseQuery
 from sqlalchemy import text, event
 from sqlalchemy.inspection import inspect
@@ -189,6 +192,8 @@ class Whooshee(object):
     """A top level class that allows to register whoosheers and adds an
     on_commit hook to SQLAlchemy.
 
+    一个顶层类，允许注册到whoosheers，并添加一个on_commit钩子到SQLAlchemy。
+
     There are two different methods on setting up Flask-Whooshee for your
     application. The first one would be to initialize it directly, thus
     binding it to a specific application instance::
@@ -209,6 +214,10 @@ class Whooshee(object):
     `db.Model.query_class` with a whoosh specific query class,
     :class:`WhoosheeQuery` which will enable full-text search on
     the registered model.
+
+    请注意，Whooshee将会替换Flask-SQLAlchemy的`db.Model.query_class`
+    为一个whoosh特定的查询类 :class:`WhoosheeQuery` ，这个将启用已经
+    注册的model的全文搜索。
     """
 
     _underscore_re1 = re.compile(r'(.)([A-Z][a-z]+)')
@@ -263,6 +272,8 @@ class Whooshee(object):
         and store the app on the whoosheer, so that we can always work
         with that.
         :param wh: The whoosher which should be registered.
+
+
         """
         self.whoosheers.append(wh)
         for model in wh.models:
@@ -295,6 +306,8 @@ class Whooshee(object):
         """Registers a single model for fulltext search. This basically creates
         a simple Whoosheer for the model and calls :func:`register_whoosheer`
         on it.
+
+        注册一个全文搜索的model。
         """
         # construct subclass of AbstractWhoosheer for a model
         class ModelWhoosheer(AbstractWhoosheerMeta):
@@ -377,6 +390,8 @@ class Whooshee(object):
         If the index already exists, it just opens it, otherwise it creates
         it first.
 
+        创建并打开一个所给的whoosheer和app的索引
+
         :param app: The application instance.
         :param wh: The whoosheer instance for which a index should be created.
         """
@@ -410,6 +425,8 @@ class Whooshee(object):
     def get_or_create_index(cls, app, wh):
         """Gets a previously cached index or creates a new one for the
         given app and whoosheer.
+
+        获取一个预先缓存的索引，或为所给的app和whoosheeer创建一个新的索引。
 
         :param app: The application instance.
         :param wh: The whoosheer instance for which the index should be
@@ -459,6 +476,8 @@ class Whooshee(object):
         This method retrieves all the data from the registered models and
         calls the ``update_<model>()`` function for every instance of such
         model.
+
+        重建所有数据的索引
         """
         for wh in self.whoosheers:
             index = type(self).get_or_create_index(_get_app(self), wh)

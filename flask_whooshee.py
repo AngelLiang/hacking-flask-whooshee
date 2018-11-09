@@ -154,6 +154,7 @@ class Whooshee(object):
         return inner
 
     def create_index(self, wh):
+        '''创建索引'''
         index_path = os.path.join(self.index_path_root, wh.index_subdir)
         if whoosh.index.exists_in(index_path):
             index = whoosh.index.open_dir(index_path)

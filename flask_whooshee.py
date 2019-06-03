@@ -317,7 +317,9 @@ class Whooshee(object):
         class ModelWhoosheer(AbstractWhoosheerMeta):
             @classmethod
             def _assign_primary(cls, primary, primary_is_numeric, attrs, model):
+                # 获取model的主键，如果数据库主键名称与model名称不同，这里会报错
                 attrs[primary] = getattr(model, primary)
+                # 主键不是数字类型
                 if not primary_is_numeric:
                     if sys.version < '3':
                         attrs[primary] = unicode(attrs[primary])
@@ -328,20 +330,22 @@ class Whooshee(object):
         mwh = ModelWhoosheer
 
         def inner(model):
-            '''装饰器的处理上下文'''
+            """装饰器的处理上下文"""
             mwh.index_subdir = model.__tablename__
             mwh.models = [model]
 
             # 获取需要建立索引的model的字段
             schema_attrs = {}
-            for field in model.__table__.columns:   # 遍历model的所有字段
-                # 主键
+            for field in model.__table__.columns:   # 遍历数据表的所有字段
+                # 获取主键
                 if field.primary_key:
                     primary = field.name
                     primary_is_numeric = True
                     if isinstance(field.type, SQLInteger):
+                        # 字段类型是整型
                         schema_attrs[field.name] = whoosh.fields.NUMERIC(stored=True, unique=True)
                     else:
+                        # 非整型
                         primary_is_numeric = False
                         schema_attrs[field.name] = whoosh.fields.ID(stored=True, unique=True)
                 elif field.name in index_fields:    # 获取其他非主键字段
